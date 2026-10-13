@@ -1,0 +1,133 @@
+
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NEUROGRID — Gra logiczna</title>
+<style>
+body {
+  margin: 0;
+  background: #0b1020;
+  color: #eafcff;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 25px;
+}
+h1 { color: #55f6e5; }
+#board {
+  display: grid;
+  grid-template-columns: repeat(5, 60px);
+  gap: 7px;
+  justify-content: center;
+  margin: 25px auto;
+}
+button {
+  cursor: pointer;
+  border: 1px solid #36516a;
+  border-radius: 10px;
+  background: #17243a;
+  color: white;
+  padding: 15px;
+  font-size: 20px;
+}
+button:hover { background: #22505b; }
+#message { color: #55f6e5; min-height: 25px; }
+</style>
+</head>
+<body>
+<h1>⚡ NEUROGRID</h1>
+<p>Doprowadź energię do rdzenia. Omijaj czerwone awarie!</p>
+<p>Punkty: <strong id="score">0</strong></p>
+<div id="board"></div>
+<p id="message">Kliknij sąsiednie pole, aby ruszyć.</p>
+<button onclick="restart()">Nowa gra ↻</button>
+
+<script>
+const board = document.getElementById("board");
+const message = document.getElementById("message");
+const scoreEl = document.getElementById("score");
+let position, score, blocked, visited, finished;
+
+function restart() {
+  position = 0;
+  score = 0;
+  finished = false;
+  visited = new Set([0]);
+  blocked = new Set([2, 7, 10, 13, 17, 18, 21]);
+  // Zachowujemy przynajmniej jedną prostą drogę do celu.
+  blocked.delete(1);
+  blocked.delete(3);
+  blocked.delete(4);
+  blocked.delete(9);
+  blocked.delete(14);
+  blocked.delete(19);
+  blocked.delete(24);
+  message.textContent = "Zacznij od pola ϟ w lewym górnym rogu.";
+  draw();
+}
+
+function draw() {
+  board.replaceChildren();
+  for (let i = 0; i < 25; i++) {
+    const b = document.createElement("button");
+    b.style.width = "60px";
+    b.style.height = "60px";
+    b.style.padding = "0";
+
+    if (i === 0) {
+      b.textContent = "ϟ";
+      b.style.color = "#55f6e5";
+    } else if (i === 24) {
+      b.textContent = "◆";
+      b.style.color = "#c99cff";
+    } else if (blocked.has(i)) {
+      b.textContent = "×";
+      b.style.color = "#ff647c";
+    } else if (visited.has(i)) {
+      b.textContent = "●";
+      b.style.color = "#8cffb2";
+    } else {
+      b.textContent = "·";
+    }
+
+    b.onclick = () => move(i);
+    board.appendChild(b);
+  }
+  scoreEl.textContent = score;
+}
+
+function move(n) {
+  if (finished || blocked.has(n) || visited.has(n)) return;
+
+  const adjacent = [
+    position - 5, position + 5,
+    position - 1, position + 1
+  ].some(x => x === n &&
+    x >= 0 && x < 25 &&
+    (Math.abs(x - position) === 5 ||
+     Math.floor(x / 5) === Math.floor(position / 5)));
+
+  if (!adjacent) {
+    message.textContent = "Możesz przejść tylko na sąsiednie pole!";
+    return;
+  }
+
+  position = n;
+  visited.add(n);
+  score += 10;
+
+  if (n === 24) {
+    finished = true;
+    score += 100;
+    message.textContent = "🎉 Udało się! Rdzeń uruchomiony! +100 punktów.";
+  } else {
+    message.textContent = "Dobry ruch! Zaplanuj następny krok.";
+  }
+  draw();
+}
+
+restart();
+</script>
+</body>
+</html>
